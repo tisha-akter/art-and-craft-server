@@ -31,8 +31,9 @@ async function run() {
 
     const ClassesInfoCollection = client.db("summerCamp").collection("classesInfo");
     const usersCollection = client.db("summerCamp").collection("users");
+    const selectedClassCollection = client.db("summerCamp").collection("selectedClasses");
 
-
+    // classes and instruc related api 
     app.get('/classesInfo', async(req, res) => {
         const result = await ClassesInfoCollection.find().toArray();
         res.send(result);
@@ -51,6 +52,14 @@ async function run() {
         res.send(result);
       });
 
+
+    //   selectedClass related apis 
+    app.post('/selectedClasses', async(req, res) => {
+        const item = req.body;
+        console.log(item);
+        const result = await selectedClassCollection.insertOne(item)
+        res.send(result);
+    })
 
 
 
