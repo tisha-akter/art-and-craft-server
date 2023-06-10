@@ -40,9 +40,14 @@ async function run() {
         })
 
         // users related api 
+        app.get('/users', async (req, res) => {
+            const result = await usersCollection.find().toArray();
+            res.send(result);
+          });
+
+
         app.post('/users', async (req, res) => {
             const user = req.body;
-            console.log(user)
             const query = { email: user?.email }
             const existingUser = await usersCollection.findOne(query);
 
