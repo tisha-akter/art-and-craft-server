@@ -3,6 +3,9 @@ const app = express();
 const cors = require('cors');
 // const jwt = require('jsonwebtoken');
 require('dotenv').config()
+
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY)
+
 const port = process.env.PORT || 5000;
 
 
@@ -51,6 +54,7 @@ async function run() {
         const ClassesInfoCollection = client.db("summerCamp").collection("classesInfo");
         const usersCollection = client.db("summerCamp").collection("users");
         const selectedClassCollection = client.db("summerCamp").collection("selectedClasses");
+        const paymentCollection = client.db("summerCamp").collection("payments");
 
 
 
@@ -69,6 +73,16 @@ async function run() {
             const result = await ClassesInfoCollection.find().toArray();
             res.send(result);
         })
+        app.post('/classesInfo', async (req, res) => {
+            const newClass = req.body;
+            try {
+                await ClassesInfoCollection.insertOne(newClass);
+                res.json({ success: true, message: 'Class created successfully' });
+            } catch (error) {
+                console.error('Error creating class:', error);
+                res.status(500).json({ success: false, message: 'Failed to create class' });
+            }
+        });
 
         // users related api 
         app.get('/users', async (req, res) => {
@@ -90,11 +104,11 @@ async function run() {
         });
 
 
-        app.get('/users/admin/:email', async(req, res) => {
+        app.get('/users/admin/:email', async (req, res) => {
             const email = req.params.email
-            const query = {email: email}
+            const query = { email: email }
             const user = await usersCollection.findOne(query);
-            const result = {admin: user?.role === 'admin'}
+            const result = { admin: user?.role === 'admin' }
             res.send(result);
         })
 
@@ -113,6 +127,14 @@ async function run() {
             res.send(result);
         })
 
+        app.get('/users/instructor/:email', async (req, res) => {
+            const email = req.params.email
+            const query = { email: email }
+            const user = await usersCollection.findOne(query);
+            const result = { instructor: user?.role === 'instructor' }
+            res.send(result);
+        })
+
         // for make instructor 
         app.patch('/users/instructor/:id', async (req, res) => {
             const id = req.params.id;
@@ -126,6 +148,7 @@ async function run() {
             res.send(result);
         })
 
+        // delete users 
         app.delete('/users/admin/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
@@ -135,7 +158,7 @@ async function run() {
 
 
         //   selectedClass related apis
-        app.get('/selectedClasses',  async (req, res) => {
+        app.get('/selectedClasses', async (req, res) => {
             const email = req.query.email;
             if (!email) {
                 res.send([]);
@@ -167,6 +190,36 @@ async function run() {
             res.send(result);
         })
 
+
+        // create payment intent 
+        app.post('/create-payment-intent', async (req, res) => {
+            const { price } = req.body;
+
+            const amount = price * 100;
+            // console.log(price, amount)
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret
+            })
+        })
+
+
+        // payment related api 
+        app.post('/payments', async (req, res) => {
+            const payment = req.body;
+            const insertResult = await paymentCollection.insertOne(payment);
+
+
+            const query = { _id: { $in: payment.cartItems.map(id => new ObjectId(id)) } }
+            const deleteResult = await selectedClassCollection.deleteMany(query)
+
+            res.send({ insertResult, deleteResult });
+        })
 
 
 
