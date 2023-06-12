@@ -13,24 +13,24 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// const verifyJWT = (req, res, next) => {
-//     const authorization = req.headers.authorization;
-//     if (!authorization) {
-//         return res.status(401).send({ error: true, message: 'unauthorized access' });
-//     }
+const verifyJWT = (req, res, next) => {
+    const authorization = req.headers.authorization;
+    if (!authorization) {
+        return res.status(401).send({ error: true, message: 'unauthorized access' });
+    }
 
-//     // bearer token 
-//     const token = authorization.split(' ')[1];
+    // bearer token 
+    const token = authorization.split(' ')[1];
 
-//     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-//         if (err) {
-//             return res.status(401).send({ error: true, message: 'unauthorized access' })
-//         }
-//         req.decoded = decoded;
-//         next();
-//     })
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(401).send({ error: true, message: 'unauthorized access' })
+        }
+        req.decoded = decoded;
+        next();
+    })
 
-// }
+}
 
 
 
@@ -73,8 +73,10 @@ async function run() {
             const result = await ClassesInfoCollection.find().toArray();
             res.send(result);
         })
+
         app.post('/classesInfo', async (req, res) => {
             const newClass = req.body;
+            newClass.status = 'pending';
             try {
                 await ClassesInfoCollection.insertOne(newClass);
                 res.json({ success: true, message: 'Class created successfully' });
@@ -131,7 +133,7 @@ async function run() {
             const email = req.params.email
             const query = { email: email }
             const user = await usersCollection.findOne(query);
-            const result = { instructor: user?.role === 'instructor' }
+            const result = { instructor: user?.role === 'instructor' };
             res.send(result);
         })
 
