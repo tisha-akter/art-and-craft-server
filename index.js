@@ -86,6 +86,32 @@ async function run() {
             }
         });
 
+
+
+        // for approve post 
+        app.patch('/classesInfo/update/status/:classId', async (req, res) => {
+            const classId = req.params.classId;
+            const { status, feedback } = req.body;
+
+            console.log(classId, feedback );
+
+            try {
+                // Update the class status in the database
+                await ClassesInfoCollection.updateOne(
+                    { _id: new ObjectId(classId) },
+                    { $set: { status: status, feedback: feedback  } }
+                );
+
+                res.json({ success: true, message: 'Class status updated successfully' });
+            } catch (error) {
+                console.error('Error updating class status:', error);
+                res.status(500).json({ success: false, message: 'Failed to update class status' });
+            }
+        });
+
+
+
+
         // users related api 
         app.get('/users', async (req, res) => {
             const result = await usersCollection.find().toArray();
@@ -138,17 +164,17 @@ async function run() {
         })
 
         // for make instructor 
-        app.patch('/users/instructor/:id', async (req, res) => {
-            const id = req.params.id;
-            const filter = { _id: new ObjectId(id) };
-            const updateDoc = {
-                $set: {
-                    role: 'instructor'
-                },
-            };
-            const result = await usersCollection.updateOne(filter, updateDoc);
-            res.send(result);
-        })
+        // app.patch('/users/instructor/:id', async (req, res) => {
+        //     const id = req.params.id;
+        //     const filter = { _id: new ObjectId(id) };
+        //     const updateDoc = {
+        //         $set: {
+        //             role: 'instructor'
+        //         },
+        //     };
+        //     const result = await usersCollection.updateOne(filter, updateDoc);
+        //     res.send(result);
+        // })
 
         // delete users 
         app.delete('/users/admin/:id', async (req, res) => {
