@@ -74,6 +74,15 @@ async function run() {
             res.send(result);
         })
 
+        // update or edit 
+        app.get('/classesInfo/update/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const result = await ClassesInfoCollection.findOne(query);
+            res.send(result);
+        })
+
+        // class create 
         app.post('/classesInfo', async (req, res) => {
             const newClass = req.body;
             newClass.status = 'pending';
@@ -93,13 +102,13 @@ async function run() {
             const classId = req.params.classId;
             const { status, feedback } = req.body;
 
-            console.log(classId, feedback );
+            console.log(classId, feedback);
 
             try {
                 // Update the class status in the database
                 await ClassesInfoCollection.updateOne(
                     { _id: new ObjectId(classId) },
-                    { $set: { status: status, feedback: feedback  } }
+                    { $set: { status: status, feedback: feedback } }
                 );
 
                 res.json({ success: true, message: 'Class status updated successfully' });
@@ -163,18 +172,7 @@ async function run() {
             res.send(result);
         })
 
-        // for make instructor 
-        // app.patch('/users/instructor/:id', async (req, res) => {
-        //     const id = req.params.id;
-        //     const filter = { _id: new ObjectId(id) };
-        //     const updateDoc = {
-        //         $set: {
-        //             role: 'instructor'
-        //         },
-        //     };
-        //     const result = await usersCollection.updateOne(filter, updateDoc);
-        //     res.send(result);
-        // })
+
 
         // delete users 
         app.delete('/users/admin/:id', async (req, res) => {
@@ -248,6 +246,17 @@ async function run() {
 
             res.send({ insertResult, deleteResult });
         })
+
+
+        //enrolled classes
+        app.post('/enrolled-classes', async (req, res) => {
+            const { userId } = req.body;
+
+            const result = await selectedClassCollection.find({ userId }).toArray();
+            res.send({ result });
+
+        });
+
 
 
 
